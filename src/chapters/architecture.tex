@@ -1,0 +1,36 @@
+\chapter{Architectural Overview}
+\label{chapter:architecture}
+
+In this chapter we will describe the high-level structure of Lxchecker. We will present the components and highlight the interactions between them. The inner workings of individual subsystems will be detailed in \labelindexref{Chapter}{chapter:implementation}.
+
+
+\section{Architectural Overview}
+\label{sec:arch-overview}
+
+\fig[scale=0.5]{src/img/architectural-overview.pdf}{img:architectural-overview}{architectural overview of Lxchecker}
+
+As it is shown in \labelindexref{Figure}{img:architectural-overview}, the Lxchecker system consists of three components: the Lxchecker binary containing the actual code, a Docker Swarm cluster for testing uploaded submissions and a MongoDB database server. All of them are separate processes, residing on possibly different hosts and talking to each other over the network. Each of these is described from a high-level perspective in the following sections.
+
+
+\section{The Lxchecker Binary}
+\label{sec:binary}
+
+All of Lxchecker's code is packaged into a single binary, which is meant to run on a single host and listen for HTTP requests on port 80. This binary is responsible for serving the web interface, handling all the logic and managing the other two components, the database and the Docker cluster. It is comprised of three modules: a web module (which implements all user interaction), a scheduler (which runs submissions and fetches results) and a database connector module (providing a higher-level API to the MongoDB collections). Each of these modules is explained in the following paragraphs.
+
+The \textbf{web module} handles HTTP requests from the user's browser. On the client side, it serves HTML templates, processes form submits and manages authentication using cookies. Deeper down in the request handlers, the web module deals with data persistence and triggers submission testing. Basically, the web module contains what in the \textbf{MVC}\footnote{Model–view–controller, \url{en.wikipedia.org/wiki/Model-view-controller}} terminology would be called \textbf{views} and \textbf{controllers}. It uses the other modules as dependencies.
+
+Interactions with the Docker Swarm cluster are managed by the \textbf{scheduler module}, which provides a simple API for submitting assignments and fetching results. This separates the complicated Docker-specific logic from the web module code. The API consists of a single blocking method, whose most important arguments are \textbf{the code to be tested} and \textbf{the environment} to use for evaluation. The result contains the \textbf{exit code} (to determine whether the testing was successful) and the \textbf{evaluation logs}, from which the score can be derived. This module uses the \texttt{engine-api}\footnote{\texttt{engine-api}, a Go client library for Docker, \url{godoc.org/github.com/docker/engine-api}} Go library for interacting with the Docker hosts.
+
+The \textbf{storage interface module} acts as an \textbf{ORM}\footnote{Object-relational mapping, \url{en.wikipedia.org/wiki/Object-relational_mapping}} wrapper around the database. One reason is to simplify database reads and writes in the web module by providing a high-level API. Another motive is to abstract the actual persistence technology (whether it's NoSQL\footnote{NoSQL Databases Explained, \url{mongodb.com/nosql-explained}} database such as MongoDB or a relational one). Since the upper module is not aware of the implementation details, a future change to a different storage schema can be easily achieved. In \textbf{MVC} terms, this module contains database \textbf{models}, in-language representations of serializable data.
+
+
+\section{Docker Swarm}
+\label{sec:swarm}
+
+\todo
+
+
+\section{MongoDB Server}
+\label{sec:mongo}
+
+\todo{}

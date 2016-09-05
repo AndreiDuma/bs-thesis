@@ -1,12 +1,13 @@
 \chapter{Introduction}
 \label{chapter:intro}
 
-Practical coding assignments play an important role in the educational development of Computer Science students. Homework and projects allow future engineers to internalize theoretical concepts and develop effective habits and techniques. Even more, technologies such as programming languages or frameworks can only be learnt by practice.
+Practical coding assignments play an important role in the educational development of Computer Science students. Homework and projects allow future engineers to internalize theoretical concepts and develop effective habits and techniques. Even more, technologies such as programming languages or frameworks can only be learned by practice.
 
 In contrast to theoretical lectures and exams, which can be delivered to dozens of students simultaneously, coding assignments require particular attention to each individual. Testing a code submission often involves downloading source files from an email server or a web platform, compiling them locally into an executable, running a suite of tests to produce a numerical score, potentially deducting penalty points due to missed deadlines and eventually filling out a spreadsheet with the final grade. From a technical perspective, different testing environments might produce different results. For the teacher, it is a highly repetitive and time-consuming process. For the student, it means keeping track of different email addresses or submission procedures, deadlines and other policies. Moreover, this approach doesn't allow the student to know in real time how his solution behaves against the tests. One might argue that tests could be made available to all students, but a secret testing mechanism might be desired. Besides that, an update requires all students to redownload the suite. Manually grading coding assignments is difficult and inefficient.
 
-Let's consider a different approach by telling the story of Mihai, first year student in the Ideal Computer Science University (ICSU). He receives his first Computer Programming assignment two weeks into the semester. The homework document asks him to submit his solution in C to https://lxchecker.icsu.edu. After creating an account, he visits the Computer Programming page, selects his code archive using a file dialogue and clicks 'submit'. 10 seconds later, he sees the test suite awarded him 90 out of 90 points, he is happy and goes to sleep. One week later, after the deadline had passed, the teacher grades all submissions for coding style and general quality of the code. Potential deadline penalties are automatically subtracted and the final grade is computed. The end. The action flow is simple and intuitive for both students and teachers. All submissions are graded in hermetic and identical environments, guaranteeing reliability, security and fairness.
+Let's consider a different approach by telling the story of Mihai, first year student in the Ideal Computer Science University (ICSU). He receives his first Computer Programming assignment two weeks into the semester. The homework document asks him to submit his solution in C to https://lxchecker.icsu.edu. After creating an account, he visits the Computer Programming page, selects his code archive using a file dialogue and clicks 'submit'. 10 seconds later, he sees the test suite awarded him 90 out of 90 points, he is happy and goes to sleep. One week later, after the deadline had passed, the teacher grades all submissions for coding style and general quality of the code. Potential deadline penalties are automatically subtracted and the final grade is computed. The end. The action flow is simple and intuitive for both students and teachers. All submissions are graded in hermetic and identical environments, guaranteeing reliability, security and fairness. A high-level picture of how such a system would behave is presented in \labelindexref{Figure}{img:conceptual-view}.
 
+\fig[scale=0.6]{src/img/conceptual-view.pdf}{img:conceptual-view}{conceptual view of automated grading}
 
 \section{Objectives}
 \label{sec:objectives}
@@ -18,7 +19,7 @@ The end goal of this project is to provide a ready-to-use software solution for 
 
 The platform should be easy to install and maintain by the faculty staff. Going from several fresh Linux hosts to a functional lxchecker cluster should be a matter of installing a few packages and doing minimal configuration, all by following clear steps in the documentation of the project.
 
-Lxchecker should allow global admins to easily create subjects and assign priviledged roles to teachers. Teachers should be able to define and configure assignments in a straightforward manner. Uploading submissions and checking results should be quick and intuitive for students.
+Lxchecker should allow global admins to easily create subjects and assign privileged roles to teachers. Teachers should be able to define and configure assignments in a straightforward manner. Uploading submissions and checking results should be quick and intuitive for students.
 
 \subsection{Performance}
 \label{sub-sec:performance}
@@ -29,7 +30,7 @@ While the ease of use is a rather subjective quality, performance can be quantif
 \section{Use Cases}
 \label{sec:use-cases}
 
-The project attemps to be flexible enough to be used in a variety of scenarios. The following subsections describe two common use cases.
+The project attempts to be flexible enough to be used in a variety of scenarios. The following subsections describe two common use cases.
 
 \subsection{Automated Homework Grader}
 \label{sub-sec:homework}
@@ -42,7 +43,7 @@ The scenario we had in mind when developing lxchecker is that of a grading syste
 	\item multi-level permission system (admin, teacher \& student roles)
 \end{itemize}
 
-In this regard, lxchecker was inspired by vmchecker \cite{gosu}, whose features and limitations are described in \labelindexref{Chapter}{chapter:sata-and-rw}.
+In this regard, lxchecker was inspired by Vmchecker \cite{gosu}, whose features and limitations are described in \labelindexref{Chapter}{chapter:sata-and-rw}.
 
 \subsection{Online Judge}
 \label{sub-sec:judge}
