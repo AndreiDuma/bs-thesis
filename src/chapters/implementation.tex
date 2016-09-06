@@ -1,4 +1,95 @@
 \chapter{Implementation}
 \label{chapter:implementation}
 
-\todo{implementation :d}
+In this chapter, we will show how Lxchecker is implemented. Firstly, \labelindexref{Section}{sec:technologies} will describe the implementation technologies and explain why we use them. We then proceed to detail the inner workings of the three modules of the application. In \labelindexref{Section}{sec:scheduler-module}, we will see how the interaction with Docker is approached. \labelindexref{Section}{sec:storage-module} presents the API exposed by the storage interface module. After covering these dependencies, we will go over the web module in \labelindexref{Section}{sec:web-module}.
+
+
+\section{Technologies}
+\label{sec:technologies}
+
+The quality of a software implementation greatly depends on the utilized tools. That is why we put a lot of thought into finding the suitable technologies for building Lxchecker. In this section we will first explain the general decision criteria we used. Each subsection will then cover a technology in detail, presenting its advantages, drawbacks and considered alternatives.
+
+When contemplating an option, we analyzed the technology from the following perspectives. While each of them is important, we deemed some aspects more significant in the context of Lxchecker. In descending order of relevance:
+\begin{itemize}
+	\item \textbf{features}: we looked at what functionality we need and how well the particular technology provides them.
+	\item \textbf{development and maintenance costs}: we wanted tools that make development easy, but also allow comfortable future maintenance. We searched for technologies that are easy to understand and use.
+	\item \textbf{future support}: since Lxchecker aims to be a long-term solution for automated assignment grading, good backing from industry and community for its software dependencies is important.
+	\item \textbf{performance}: both user experience and resource consumption are essential for Lxchecker.
+\end{itemize}
+
+
+\subsection{Docker}
+\label{sec:tech-docker}
+
+We already discussed the advantages of containers over virtual machines in \labelindexref{Chapter}{chapter:sata-and-rw}. Although using LXC (Linux Containers) directly was possible, our needs were better met by modern container engines. Among them, open-source Docker is by far the most popular. It is widely supported in all major cloud computing platforms (such as Amazon AWS\footnote{Amazon AWS Cloud, \url{aws.amazon.com}} or Google Cloud Platform\footnote{Google Cloud Platform, \url{cloud.google.com}}), has advanced orchestration and provisioning\footnote{Docker Compose, \url{docs.docker.com/compose/overview}} tools, features native clustering\footnote{Docker Swarm, \url{docs.docker.com/swarm/overview}}, and comes with a cloud-based image registry service\footnote{Docker Hub, \url{docs.docker.com/docker-hub}}. Docker has the most comprehensive set of features and is battle-tested by the industry, from which it has secured solid support.
+
+An alternative to Docker is the more recent \texttt{rkt}\footnote{CoreOS's \texttt{rkt}, \url{coreos.com/rkt}} from CoreOS, which promises superior security and composability. Given \texttt{rkt}'s rather short presence on the market and because security is not crucial to our use case, we preferred the widely supported Docker.
+
+\subsection{MongoDB}
+\label{sec:tech-mongo}
+
+For the persistence layer of Lxchecker, we chose to use MongoDB, a NoSQL database with dynamic schemas and intuitive JSON-like\footnote{BSON, \url{bsonspec.org}} document structure. MongoDB is open-source and provides drivers for a variety of programming languages\footnote{MongoDB Drivers, \url{docs.mongodb.com/ecosystem/drivers}}. It has good performance\footnote{Compare incomparable: PostgreSQL vs Mysql vs Mongodb, \url{http://erthalion.info/2015/12/29/json-benchmarks}} and built-in replication (useful for ensuring data redundancy). MongoDB has comprehensive documentation and strong community support.
+
+\subsection{Go}
+\label{sec:tech-go}
+
+To glue dependencies together and implement the actual functionality, we decided to use Go\footnote{The Go programming language, \url{golang.org}} programming language. Modern yet widely adopted, Go is a compiled, statically typed language with garbage collection and CSP\footnote{Communicating sequential processes, \url{en.wikipedia.org/wiki/Communicating_sequential_processes}}-style concurrency features. It is appropriate for developing servers, balancing the performance and rigor of strongly-typed, compiled languages with the brevity of dynamically-typed languages. Other advantages include an extensive standard library and comprehensive documentation. In the recent years, Go has gained a lot of community traction, which, combined with the active support from companies like Google, suggests a stable future.
+
+The two main alternatives considered were Java and Python. Java, although mature and efficient, promised a longer development time because of its verbosity. Python is at the other end of the brevity spectrum, producing simple and concise code, but its dynamic typing conflicted with the robustness we desired.
+
+For working with Docker, we're using the official client library \texttt{engine-api}\footnote{\texttt{engine-api}, Go library for Docker, \url{godoc.org/github.com/docker/engine-api}}. It offers programmatic access to all of Docker's functionality as it available using the \texttt{docker} command line tool.
+
+For MongoDB, we found the \texttt{mgo}\footnote{\texttt{mgo}, Go library for MongoDB, \url{godoc.org/gopkg.in/mgo.v2}} library very powerful. One feature that stands out is the ability to serialize and deserialize Go structs transparently, making the library almost as easy to use as an ORM framework.
+
+In the web module, we are making heavy use of the standard library. All frontend templating is done using the \texttt{html/template} package and all request handling is managed by the standard \texttt{http} package. We decided against using a higher-lever web library to make future maintenance easier. Besides that, the standard library is powerful enough. We did use an external library for routing requests based on the URL path -- the \texttt{gorilla/mux}\footnote{\texttt{gorilla/mux}, request router for Go, \url{gorillatoolkit.org/pkg/mux}} package allows elegant routing schemas in a few lines of code.
+
+
+\section{Scheduler Module}
+\label{sec:scheduler-module}
+
+\todo{
+	- the \texttt{SubmitOptions} and \texttt{SubmitResponse} structs (following the API model of the \texttt{engine-api} library)
+	- the \texttt{scheduler} package \& method
+	- steps: create container, untar submission, start container, wait for container, get logs
+}
+
+\section{Storage Interface Module}
+\label{sec:storage-module}
+
+\todo{
+	- reason: provide simple API for higher modules
+	- describe Subject, Assignment, Submission, User, TeacherRole structs
+	- describe the \texttt{db} package \& methods
+}
+
+
+\section{Web Module}
+\label{sec:web-module}
+
+\todo{
+	- package \texttt{web}
+	- we will first discuss system ignoring authentication, then talk about package \texttt{util}
+}
+
+\subsection{Handlers}
+\label{sub-sec:handlers}
+
+\todo{
+	- URL structure, error handling (panic recovery)
+}
+
+\subsection{Templates}
+\label{sub-sec:templates}
+
+\todo{
+	- vanilla Go templates: package \texttt{html/template}
+	- template inheritance schema, UI framework (Bootstrap), label-based system
+}
+
+\subsection{Authentication}
+\label{sub-sec:authentication}
+
+\todo{
+	- states: unauthenticated, authenticated, +teacher, +admin
+	- middleware, cookie format, permissions (roles), the RequestData struct
+}

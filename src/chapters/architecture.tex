@@ -9,13 +9,13 @@ In this chapter we will describe the high-level structure of Lxchecker. We will 
 
 \fig[scale=0.5]{src/img/architectural-overview.pdf}{img:architectural-overview}{architectural overview of Lxchecker}
 
-As it is shown in \labelindexref{Figure}{img:architectural-overview}, the Lxchecker system consists of three components: the Lxchecker binary containing the actual code, a Docker Swarm cluster for testing uploaded submissions and a MongoDB database server. All of them are separate processes, residing on possibly different hosts and talking to each other over the network. Each of these is described from a high-level perspective in the following sections.
+As it is shown in \labelindexref{Figure}{img:architectural-overview}, the Lxchecker system consists of three components: the Lxchecker binary containing the actual code, a Docker Swarm\footnote{Docker Swarm, \url{docs.docker.com/engine/swarm}} cluster for testing uploaded submissions and a MongoDB\footnote{MongoDB, \url{mongodb.com}} database server. All of them are separate processes, residing on possibly different hosts and talking to each other over the network. Each of these is described from a high-level perspective in the following sections.
 
 
 \section{The Lxchecker Binary}
 \label{sec:binary}
 
-All of Lxchecker's code is packaged into a single binary, which is meant to run on a single host and listen for HTTP requests on port 80. This binary is responsible for serving the web interface, handling all the logic and managing the other two components, the database and the Docker cluster. It is comprised of three modules: a web module (which implements all user interaction), a scheduler (which runs submissions and fetches results) and a database connector module (providing a higher-level API to the MongoDB collections). Each of these modules is explained in the following paragraphs.
+All of Lxchecker's code is packaged into a single binary, which is meant to run on a single host and listen for HTTP requests on port 80. This binary is responsible for serving the web interface, handling all the logic and managing the other two components, the database and the Docker cluster. It is comprised of \textbf{three modules}: a web module (which implements all user interaction), a scheduler (which runs submissions and fetches results) and a database connector module (providing a higher-level API to the MongoDB collections). Each of these modules is explained in the following paragraphs.
 
 The \textbf{web module} handles HTTP requests from the user's browser. On the client side, it serves HTML templates, processes form submits and manages authentication using cookies. Deeper down in the request handlers, the web module deals with data persistence and triggers submission testing. Basically, the web module contains what in the \textbf{MVC}\footnote{Model–view–controller, \url{en.wikipedia.org/wiki/Model-view-controller}} terminology would be called \textbf{views} and \textbf{controllers}. It uses the other modules as dependencies.
 
@@ -27,10 +27,16 @@ The \textbf{storage interface module} acts as an \textbf{ORM}\footnote{Object-re
 \section{Docker Swarm}
 \label{sec:swarm}
 
-\todo
+The Docker platform, together with its Swarm setup, is an essential component of the Lxchecker system. When running on a single host, the Docker daemon can be used to schedule a job remotely, specifying at the same time its environment, parameters, resource constraints etc. In conjunction with Swarm, Docker becomes even more powerful. It can transparently turn a cluster of Docker machines into a virtual host controllable by the very same API. This allows theoretically infinite horizontal scaling with no alteration in the code.
+
+In the world of Docker, containers are created from images. An image is a layered file system\footnote{UnionFS, \url{filesystems.org/project-unionfs.html}} based on a Linux setup (such as a vanilla Ubuntu distribution). The common and recommended way to define and build an image is by using a \texttt{Dockerfile}\footnote{Dockerfile reference, \url{docs.docker.com/engine/reference/builder}}, which employs a declarative syntax to specify building steps (such as installing a package or running a command). After building, images are stored in the Docker Registry\footnote{Docker Registry, \url{docs.docker.com/registry}}. When starting a container, the Docker daemon first fetches the specified image from the Registry (if not cached). \labelindexref{Figure}{img:docker-registry} shows two Docker hosts pulling images from the Registry for creating some containers.
+
+\fig[scale=0.7]{src/img/docker-registry.pdf}{img:docker-registry}{Docker hosts pulling images from the Registry}
+
+For Lxchecker, we are using \texttt{Dockerfiles} to define \textbf{per-assignment test environments}. After building, we push the resulting images to the Docker Registry. At evaluation time, when we pass to Docker an image name such as \texttt{lxchecker/ml_assignment_3}, the daemon knows what image to pull from the Registry and creates a container with the appropriate testing environment for the given submission.
 
 
 \section{MongoDB Server}
 \label{sec:mongo}
 
-\todo{}
+The database server runs in a different process, possibly on a different host. Replication may be used for data redundancy. The Lxchecker binary talks to MongoDB over TCP and stores objects such as subject or assignment configurations, submissions, users and granted permissions.
