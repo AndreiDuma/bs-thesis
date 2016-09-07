@@ -63,12 +63,16 @@
 
 % Code listings support
 \usepackage{listings}
+\usepackage{listings-golang}
+%\usepackage{color}
 
 \lstset{
 	numbers=left, numberstyle=\footnotesize,
 	frame=lines, captionpos=b,
 	breaklines=true,
-	basicstyle=\ttfamily
+	basicstyle=\ttfamily,
+	aboveskip=1.5em,
+	belowskip=1em
 }
 
 % notations and abbreviations
@@ -195,8 +199,8 @@
 \usepackage{courier}
 
 % SF font: Helvetica (default document font)
-%\usepackage[scaled]{helvet}
-%\renewcommand*\familydefault{\sfdefault}
+\usepackage[scaled]{helvet}
+\renewcommand*\familydefault{\sfdefault}
 
 % command for specifying TODOs
 \newcommand{\todo}[1]{

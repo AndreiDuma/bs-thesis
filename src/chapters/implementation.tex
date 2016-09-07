@@ -54,6 +54,14 @@ This component acts as an interface between the web module and the Docker Swarm.
 
 The \texttt{scheduler} package provides a single \texttt{Submit} method that takes as an argument a \texttt{SubmitOptions} configuration object and returns a \texttt{SubmitResponse} (or an \texttt{error} in case of scheduling failure).
 
+\labelindexref{Listing}{lst:submit-options} shows the \texttt{SubmitOptions} struct definition:
+\begin{itemize}
+	\item \texttt{Image} is the name of the Docker image that should be used as a testing environment (e.g. \texttt{lxchecker/ml_assignment_3})
+	\item \texttt{Submission} contains the file uploaded by the user for evaluation -- it is copied to the container as instructed by the \texttt{SubmissionPath} field (see below)
+	\item \texttt{SubmissionPath} tells the scheduler where in the container to put the submission, as expected by the tests in the image
+	\item \texttt{Timeout} specifies for how long the scheduler should wait before forcefully killing the container and returning a \textit{time limit exceeded} error
+\end{itemize}
+
 \lstset{language=Golang,caption=the \texttt{SubmitOptions} struct,label=lst:submit-options}
 \begin{lstlisting}
 type SubmitOptions struct {
@@ -64,7 +72,13 @@ type SubmitOptions struct {
 }
 \end{lstlisting}
 
-\lstset{language=Golang,caption=the \texttt{SubmitResponse} struct,label=lst:submit-options}
+The \texttt{SubmitResponse} struct definition is shown in \labelindexref{Listing}{lst:submit-response}.
+\begin{itemize}
+	\item \texttt{Logs} contain the combined \texttt{stdout} / \texttt{stderr} produced by the tests in the environment.
+	\item \texttt{ExitCode} is the status code of the tests execution: 0 for a successful run (no fatal error that interrupted the evaluation), non-zero for error. Note that a successful run of the tests does not require tests to pass -- the actual testing results are extracted from the \texttt{Logs} based on \textit{metadata} (see below).
+\end{itemize}
+
+\lstset{language=Golang,caption=the \texttt{SubmitResponse} struct,label=lst:submit-response}
 \begin{lstlisting}
 type SubmitResponse struct {
 	Logs     []byte
@@ -72,39 +86,90 @@ type SubmitResponse struct {
 }
 \end{lstlisting}
 
-\todo{
-	- the \texttt{SubmitOptions} and \texttt{SubmitResponse} structs (following the API model of the \texttt{engine-api} library)
-	- the \texttt{scheduler} package \& method
-}
+LxChecker uses \textbf{metadata} to allow environment designers (such as a teacher preparing an assignment) to expose data from the evaluation logs to the web frontend. For all log lines that match the format \textbf{\texttt{@key value}}, the frontend adds the corresponding key-value pair to a \textbf{metadata} map. A special required key is \textbf{\texttt{score}} (used for declaring the submission's evaluation score), but any number of keys can be defined. More on this topic will follow in \labelindexref{Section}{sec:web-module}.
 
 \subsection{Execution Flow}
 \label{sub-sec:scheduler-execution}
 
+This subsection goes through the steps of running tests on a submission. An overview is presented in \labelindexref{Figure}{img:scheduler-overview}. The dotted box shows the separation between different hosts: the light gray box is part of the Docker cloud, while the dark gray rectangle represents the evaluation results on the host of the Lxchecker binary. Everything inside the dotted box happens on a Docker host selected by the Swarm manager.
+
 \fig[scale=0.642]{src/img/scheduler-overview.pdf}{img:scheduler-overview}{execution steps performed by the scheduler}
 
-\labelindexref{Figure}{img:scheduler-overview} bla bla..
-
+When called, the \texttt{Submit} method goes through the following steps:
 \begin{enumerate}
-	\item pull image
-	\item create container
-	\item copy submission
-	\item start container
-	\item wait for finish or timeout
-	\item get results
+	\item \textbf{pull image}: the \texttt{Image} field in the \texttt{SubmitOptions} struct is used to fetch the appropriate testing environment image from the Docker Hub. This should happen only once on each Docker host, thanks to image caching.
+	\item \textbf{create container}: the pulled image is used to create a new container (stopped for now).
+	\item \textbf{copy submission}: the \texttt{Submission} bytes are tarred\footnote{tar archive, \url{en.wikipedia.org/wiki/Tar_(computing)}} and then extracted to \texttt{SubmissionPath} using Docker's \textit{copy-to-container} mechanism.
+	\item \textbf{start container}: the container is started, invoking the test suite.
+	\item \textbf{wait for finish or timeout}: the scheduler waits for the container to finish its execution. If the specified \texttt{Timeout} expires earlier, the container is stopped and an error is returned.
+	\item \textbf{get results}: the \texttt{Logs} and \texttt{ExitCode} are extracted from the container and returned in a \texttt{SubmitResponse} struct.
 \end{enumerate}
 
-\todo{
-	- steps: create container, untar submission, start container, wait for container, get logs
-}
 
 \section{Storage Interface Module}
 \label{sec:storage-module}
 
-\todo{
-	- reason: provide simple API for higher modules
-	- describe Subject, Assignment, Submission, User, TeacherRole structs
-	- describe the \texttt{db} package \& methods
+This component is a high-level wrapper over the \texttt{mgo} library. It provides an ORM-like interface, with database models as first-class objects. Currently, there is support for reading, writing and updating entities.
+
+\fig[scale=0.68]{src/img/database-schema.pdf}{img:database-schema}{database models and schema}
+
+\labelindexref{Figure}{img:database-schema} illustrates database models and relationships between them. The fields in red represent primary keys. One more than one field in red is present, the key is composite. Each entity is stored in a separate MongoDB collection\footnote{MongoDB collection, \url{docs.mongodb.com/manual/reference/glossary/\#term-collection}}, indexed\footnote{Indexes in MongoDB, \url{docs.mongodb.com/manual/indexes}} by the primary key. The following paragraphs briefly present the purpose of each model and cover the most important fields.
+
+\textbf{\texttt{Subject}} denotes a course for which automated grading is desired. The \texttt{Id} primary key must be a lowercase alphanumeric code (e.g. \texttt{ml} for a Machine Learning course), while \texttt{Name} should be the full name of the subject (e.g. "Machine Learning").
+
+\textbf{\texttt{Assignment}} holds configuration data for testing environments. Assignments are grouped by subject, hence the parent link \texttt{SubjectId}. The \texttt{Id} should be a short, yet human-readable code for the assignment (e.g. \texttt{kmeans}). \texttt{Name} should be a lengthier description like "K-means Clustering". Fields \texttt{Image}, \texttt{Timeout} and \texttt{SubmissionPath} are used by the \texttt{scheduler} module, detailed in \labelindexref{Section}{sec:scheduler-module}. The remaining fields are necessary for implementing deadline support in the web module (see \labelindexref{Section}{sec:web-module}).
+
+A \textbf{\texttt{Submission}} is created when a user uploads a file. The \texttt{AssignmentId} and \texttt{SubjectId} fields reference the parent assignment and together with \texttt{Id} serve as a composite primary key. \texttt{OwnerUsername} refers to the user that made the upload, while \texttt{Timestamp}, \texttt{UploadingFile} and \texttt{UploadingFileName} are traits of the upload itself. \texttt{Status} can be \texttt{pending}, \texttt{done} or \texttt{failed}. The next group of fields is populated on evaluation. The remaining fields are set when a teacher manually grades the submission, giving feedback.
+
+The \textbf{\texttt{User}} refers to an account on Lxchecker. A user can log in using the stored \texttt{Username} and a password whose hash is \texttt{PasswordHash}. Platform administrators have the field \texttt{IsAdmin} set to true.
+
+\textbf{\texttt{TeacherRole}} creates a many-to-many relationship between \textbf{\texttt{Users}} and \textbf{\texttt{Subjects}}. An entry in the \texttt{teacher_roles} MongoDB collection gives an user privileged read \& write access to an assignment.
+
+\subsection{The API}
+\label{sub-sec:db-api}
+
+For each model described above, package \texttt{db} provides methods for:
+\begin{itemize}
+	\item \textbf{querying} objects:
+		\begin{itemize}
+			\item \texttt{Get*} methods returning exactly one object or an \texttt{db.ErrNotFound} error.
+			\item \texttt{GetAll*} methods for returning a slice of object, possibly empty.
+		\end{itemize}
+	\item \textbf{inserting} objects:
+		\begin{itemize}
+			\item \texttt{Insert*} methods that return nothing when successful and \texttt{db.ErrNotFound} for missing parent objects or \texttt{db.ErrAlreadyExists} for duplicate insertions.
+		\end{itemize}
+	\item \textbf{updating} objects:
+		\begin{itemize}
+			\item \texttt{Update*} methods that return nothing when successful and \texttt{db.ErrNotFound} for non-existing keys.
+		\end{itemize}
+\end{itemize}
+
+Support for object deletion is planned for the future. For now, the MongoDB interactive shell can be used by a privileged staff member.
+
+\subsection{Implementation Example}
+\label{sub-sec:db-implementation}
+
+To illustrate how the \texttt{mgo} library is used for working with the MongoDB database, \labelindexref{Listing}{lst:get-submission} shows a simple query method from the \texttt{db} package.
+
+\lstset{language=Golang,caption=GetSubmission query method,label=lst:get-submission}
+\begin{lstlisting}
+func GetSubmission(subjectId, assignmentId, id string) (*Submission, error) {
+	submission := Submission{}
+	c := mongo.DB("lxchecker").C("submissions")
+	if err := c.Find(bson.M{
+		"subject_id":    subjectId,
+		"assignment_id": assignmentId,
+		"id":            id,
+	}).One(&submission); err != nil {
+		if err == mgo.ErrNotFound {
+			return nil, ErrNotFound
+		}
+		panic(err)
+	}
+	return &submission, nil
 }
+\end{lstlisting}
 
 
 \section{Web Module}
