@@ -47,9 +47,53 @@ In the web module, we are making heavy use of the standard library. All frontend
 \section{Scheduler Module}
 \label{sec:scheduler-module}
 
+This component acts as an interface between the web module and the Docker Swarm. It is implemented in the \texttt{scheduler} Go package. \labelindexref{Subsection}{sub-sec:scheduler-api} describes the simple API this package exposes, while \labelindexref{Subsection}{sub-sec:scheduler-execution} gives a step-by-step explanation of how evaluation scheduling works in LxChecker. 
+
+\subsection{The API}
+\label{sub-sec:scheduler-api}
+
+The \texttt{scheduler} package provides a single \texttt{Submit} method that takes as an argument a \texttt{SubmitOptions} configuration object and returns a \texttt{SubmitResponse} (or an \texttt{error} in case of scheduling failure).
+
+\lstset{language=Golang,caption=the \texttt{SubmitOptions} struct,label=lst:submit-options}
+\begin{lstlisting}
+type SubmitOptions struct {
+	Image          string
+	Submission     []byte
+	SubmissionPath string
+	Timeout        time.Duration
+}
+\end{lstlisting}
+
+\lstset{language=Golang,caption=the \texttt{SubmitResponse} struct,label=lst:submit-options}
+\begin{lstlisting}
+type SubmitResponse struct {
+	Logs     []byte
+	ExitCode int
+}
+\end{lstlisting}
+
 \todo{
 	- the \texttt{SubmitOptions} and \texttt{SubmitResponse} structs (following the API model of the \texttt{engine-api} library)
 	- the \texttt{scheduler} package \& method
+}
+
+\subsection{Execution Flow}
+\label{sub-sec:scheduler-execution}
+
+\fig[scale=0.642]{src/img/scheduler-overview.pdf}{img:scheduler-overview}{execution steps performed by the scheduler}
+
+\labelindexref{Figure}{img:scheduler-overview} bla bla..
+
+\begin{enumerate}
+	\item pull image
+	\item create container
+	\item copy submission
+	\item start container
+	\item wait for finish or timeout
+	\item get results
+\end{enumerate}
+
+\todo{
 	- steps: create container, untar submission, start container, wait for container, get logs
 }
 
