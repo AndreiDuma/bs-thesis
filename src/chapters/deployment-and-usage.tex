@@ -1,19 +1,88 @@
 \chapter{Deploying and Using Lxchecker}
 \label{chapter:deployment-and-usage}
 
-\todo{short chapter intro}
+This chapter covers all aspects of using Lxchecker. In \labelindexref{Section}{sec:deployment}, we present the process of installing and maintaining the platform from the perspective of faculty staff members. \labelindexref{Section}{sec:usage} shows how teachers prepare assignments and how students submit their solutions for grading. The approach is incremental -- we start with steps as easy as logging in and then proceed to more advanced procedures.
 
 
 \section{Deploying Lxchecker}
 \label{sec:deployment}
 
-\todo{deploy}
-- everything can be installed based on Docker
-  - install Docker on all hosts
-  - use images to install lxchecker, swarm, mongoDB
-  - use Docker restart policies to keep stuff running
+Lxchecker was designed with easy deployment and maintenance in mind. Given a cluster of Linux hosts, the only prerequisite for installing Lxchecker is Docker.
+
+\subsection{Installing Lxchecker}
+\label{sub-sec:install-lxchecker}
+
+For this exposition, let's assume we want to deploy Lxchecker on four machines (either physical or virtual), named \texttt{host0} through \texttt{host3}. Docker is used as a deployment tool for all of Lxchecker's dependencies, so it needs to be installed on all hosts. The documentation\footnote{Installing Docker, \url{docs.docker.com/engine/installation}} provides easy setup instructions for various Linux distributions.
+
+After installing Docker, we want to prepare the evaluation cluster -- let's use \texttt{host1}, \texttt{host2} and \texttt{host3}. We need to install\footnote{Build a Swarm cluster for production, \url{docs.docker.com/swarm/install-manual}} Swarm on all three machines, setup \texttt{host1} as a Swarm manager and add \texttt{host2} and \texttt{host3} to the cluster. From now, \texttt{host1} (the Swarm manager) will transparently behave as a giant Docker host and Lxchecker will talk to it for scheduling containers.
+
+The other dependency is MongoDB. We will use \texttt{host0} for both the database server and Lxchecker itself. Docker provides an official image\footnote{\texttt{mongo} on Docker Hub, \url{hub.docker.com/_/mongo}} for MongoDB, which can be run by a simple command: \texttt{docker run -{}-name mongo-server -d mongo}.
+
+Installing Lxchecker follows the same procedure, with two considerations: the container needs to be linked to \texttt{mongo-server} so it can reach it, and \texttt{host1}'s address must be specified via an environment variable. The resulting command: \texttt{docker run -{}-name lxchecker -{}-link mongo-server -e "DOCKER_HOST:host1" -d lxchecker/lxchecker}.
+
+Navigating to \texttt{host0} in the browser should display Lxchecker's login page.
+
+To ensure Lxchecker and its dependencies run continuously, Docker's built-in restart policies\footnote{Docker Restart Policies, \url{docs.docker.com/engine/admin/host_integration}} can be used. In case of a fatal error in one of the components, a restart policy will rerun the failed container to resume service.
+
+\subsection{Updating Lxchecker}
+\label{sub-sec:update-lxchecker}
+
+Docker makes it easy to push a software update to production:
+\begin{itemize}
+	\item on the development machine, rebuild the \texttt{lxchecker/lxchecker} image from the updated code.
+	\item push the new image to Docker Hub: \texttt{docker push lxchecker/lxchecker}.
+	\item on \texttt{host0}, pull the new image from Docker Hub: \texttt{docker pull lxchecker/lxchecker}.
+	\item reissue the \texttt{docker run} command.
+\end{itemize}
+
 
 \section{Using Lxchecker}
 \label{sec:usage}
 
-\todo{use}
+This section describes the user experience of students, teachers and admins working with Lxchecker. We first cover authentication, followed by subject \& assignment creation. Finally, we show how students upload code for testing and how their submissions are graded.
+
+\subsection{Authentication}
+\label{sub-sec:usage-authentication}
+
+\fig[scale=0.5]{src/img/scr-log-in.pdf}{img:scr-log-in}{logging in}
+
+When a user first visits the Lxchecker application, he is redirected to the login form displayed in \labelindexref{Figure}{img:scr-log-in}. If he provides valid credentials, he is logged in and showed the subject list in \labelindexref{Figure}{img:scr-subject-list}. If he doesn't have an account, he can click the "or \textbf{sign up}" link to visit the sign up page (see \labelindexref{Figure}{img:scr-sign-up}).
+
+The subjects overview page in \labelindexref{Figure}{img:scr-subject-list} also includes a form for giving admin privileges. The username provided in the textbox must belong to an existing user.
+
+\fig[scale=0.5]{src/img/scr-sign-up.pdf}{img:scr-sign-up}{creating a new account}
+
+\subsection{Working With Subjects}
+\label{sub-sec:usage-authentication}
+
+In \labelindexref{Figure}{img:scr-subject-list}, users can see the list of all existing subjects. The forms in red (for adding subjects and admins) are only visible to admins. In the example picture, the \textbf{create subject} form is used to create an entry for the "Operating Systems" course. The \textbf{id} is short and meaningful, as it will be part of all future URLs in this subject.
+
+\fig[scale=0.53]{src/img/scr-subject-list.pdf}{img:scr-subject-list}{available subjects list and \textit{create subject} form}
+
+After submitting the \textbf{create subject} form, the admin is redirected to the new "Operating Systems" subject page (see \labelindexref{Figure}{img:scr-subject}). The sections in red are only visible to admins and teachers. Typically, an admin will only create a subject, then delegate permissions to a professor or teaching assistant in that course using the \textbf{add teacher} form. Once the teacher gains privileges in this subject, he can create assignments using the \textbf{create assignment} form.
+
+\fig[scale=0.565]{src/img/scr-subject.pdf}{img:scr-subject}{subject page for the \textit{Operating Systems} course}
+
+\subsection{Managing Assignments}
+\label{sub-sec:usage-authentication}
+
+Assignment parameters were explained in previous chapters. The example data filled out in \labelindexref{Figure}{img:scr-subject} is for an assignment on the topic of "Virtual Memory", using the \texttt{lxchecker/os-vmem} Docker image as a testing environment.
+
+\fig[scale=0.563]{src/img/scr-assignment.pdf}{img:scr-assignment}{\textit{Virtual Memory} assignment page}
+
+After submitting the \textbf{create assignment} form, the user is redirected to the "Virtual Memory" assignment page, displayed in \labelindexref{Figure}{img:scr-assignment}. A submission is already included in the figure to serve as an example.
+
+The \textbf{assignment info} section contains information about:
+\begin{itemize}
+	\item \textbf{deadlines}: submissions will be penalized after the \textit{soft deadline} and will be considered "overdue" after the \textit{hard deadline}.
+	\item \textbf{daily penalty} tells how many points will be subtracted from the submissions score for each day over the soft deadline.
+	\item the \textbf{timeout} imposes a limit on the duration of the evaluation.
+\end{itemize}
+
+
+\fig[scale=0.565]{src/img/scr-submission-pending.pdf}{img:scr-submission-pending}{waiting for the submission to be evaluated}
+
+\fig[scale=0.565]{src/img/scr-submission-done.pdf}{img:scr-submission-done}{submission was tested and score is displayed (full logs not included)}
+
+\fig[scale=0.565]{src/img/scr-submission-graded.pdf}{img:scr-submission-graded}{submission after grading by teacher}
+
