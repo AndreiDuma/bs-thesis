@@ -81,6 +81,9 @@ The \textbf{assignment info} section contains information about:
 
 Section \textbf{my submissions} lists the user's own submissions, with information about evaluation status, points awarded by the system and whether the submission is \textit{active} (selected for final grading by the teacher). The current implementation automatically marks the most recent submission as \textit{active}.
 
+\subsection{Submission Upload}
+\label{sub-sec:usage-upload}
+
 The \textbf{upload submission} form at the bottom of the page is used to submit a new file for evaluation. After clicking the \textbf{submit} button, the user is redirected to the new submission page.
 
 \fig[scale=0.565]{src/img/scr-submission-pending.pdf}{img:scr-submission-pending}{waiting for the submission to be evaluated}
@@ -91,7 +94,10 @@ As shown in \labelindexref{Figure}{img:scr-submission-pending}, the submission i
 
 Once the submission is tested, more information becomes available. The \textbf{metadata} field is populated and logs are fully displayed in the \textbf{execution logs} section. Note, however, that \textbf{grading status} is still \textit{not graded} until a teacher gives feedback and a score.
 
-\fig[scale=0.565]{src/img/scr-submission-grading.pdf}{img:scr-submission-grading}{grading from for teachers}
+\subsection{Submission Grading}
+\label{sub-sec:usage-grading}
+
+\fig[scale=0.565]{src/img/scr-submission-grading.pdf}{img:scr-submission-grading}{grading form for teachers}
 
 \labelindexref{Figure}{img:scr-submission-grading} shows the grading form. The teacher fills out the \textbf{score} and the textual \textbf{feedback}. After clicking the \textbf{submit} button, the \textbf{score by teacher} and \textbf{feedback} are populated and the student can see his final grade (score by tests + score by teacher - penalty). \labelindexref{Figure}{img:scr-submission-graded} displays the page of a graded submission.
 

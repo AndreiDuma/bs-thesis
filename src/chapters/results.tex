@@ -1,16 +1,45 @@
-\chapter{Evaluation and Testing}
-\label{chapter:evaluation-and-testing}
+\chapter{Results and Future Work}
+\label{chapter:results}
 
-\todo{short chapter intro}
-
-
-\section{Evaluation}
-\label{sec:evaluation}
-
-\todo{evaluation}
+In this chapter we describe the current state of the project and attempt to assess whether the initial objectives were met. We also try to identify areas in which our implementation is lacking and suggest a few ideas for improvement.
 
 
-\section{Testing}
-\label{sec:testing}
+\section{Current State of the Project}
+\label{sec:current-state}
 
-\todo{testing}
+\textbf{At this point, Lxchecker is ready for production}. Among the features we have successfully implemented, it's worth to mention:
+\begin{itemize}
+	\item full authentication support, implemented using secure cookies
+	\item functional role-based permission system
+	\item submission evaluation on top of Docker
+	\item flexible environment definitions via \texttt{Dockerfiles}
+	\item full grading support
+	\item user-friendly interface, with rich URL linking (including redirection after log in)
+\end{itemize}
+
+Compared to Vmchecker, our system offers significantly improved \textbf{scalability}. This is due to inherent implications of Vmchecker's design: machines are not shared across subjects. This is not in accordance with how the system is actually used. Students upload submissions for evaluation in spikes, concentrated around deadlines. Deadlines rarely overlap, however, and Vmchecker doesn't make use of this distribution of load over time -- most machines sit idle, while one or two sustain all the traffic. Lxchecker solves this issue by using a single pool of resources for all subjects. Thanks to Docker Swarm, scheduling is done as efficiently as possible.
+
+\textbf{User experience} received much attention in Lxchecker. Generations of students using Vmchecker taught us about what users value and we incorporated that knowledge when designing the interface of our system.
+
+Lxchecker learned a lot from both Vmchecker's merits and shortcomings. We believe that our system inherited most of the merits and addressed most of the shortcomings. There is one notable feature of Vmchecker that cannot be implemented using Lxchecker's technology stack: \textbf{support for Windows environments}. Assignments that require a Windows operating system will continue to be tested using Vmchecker, unless support for virtual machines is added to Lxchecker.
+
+\section{Future Work}
+\label{sec:future-work}
+
+The problem of automatically grading programming assignments is a complex one. Lxchecker attempted to incorporate the essential functionality and help us draw conclusions about the feasibility of containers in this problem. Because implementation time was limited, there are features that needed to be left for the future.
+
+Functionality currently missing:
+\begin{itemize}
+	\item \textbf{deletion support} for database objects: entities such as subjects or assignments can be created and updated, but not deleted. To implement removal, the \texttt{db} package and the templates need to be updated.
+	\item a \textbf{resubmit} feature: it would be useful to be able to restart the evaluation of a solution without actually reuploading the file.
+	\item \textbf{automated container removal}: although keeping old containers for later debugging or inspection might be desired, a mechanism for cleaning up Docker hosts is needed. An idea is to have a cron\footnote{Cron, \url{en.wikipedia.org/wiki/Cron}} job that periodically removes old containers.
+	\item \textbf{custom selection of active submission}: today the most recent submission of a user on an assignment is automatically selected for grading by the teacher. A student should be able to mark any submission as final. An alternative is to rely on the deletion functionality: the desired submission could be made active by removing all newer submissions.
+\end{itemize}
+
+Broader project ideas that we thought about include:
+\begin{itemize}
+	\item \textbf{support for Windows environments}: as discussed in \labelindexref{Section}{sec:current-state}, containers are Linux-only. For assignments requiring a Windows system (e.g. "Operating Systems" course), virtual machines could be used. The change would involve extending the \texttt{scheduler} module to use a virtual machine manager such as Vagrant\footnote{Vagrant, \url{vagrantup.com}}. An assignment switch could then select between the two backend technologies. 
+	\item \textbf{in-browser code inspection}: right now teachers are required to manually download submissions to their local machines in order to check the quality of the code. Making the source tree accessible within the browser would save reviewers a lot of time. One implementation idea is to make use of MongoDB's GridFS\footnote{GridFS, \url{docs.mongodb.com/manual/core/gridfs}} for storing unarchived files in the database. The URL schema could be extended to support paths like \texttt{/-/os/vmem/57d1075d/-/src/main.cpp}. A syntax highlighter such as \texttt{highlight.js}\footnote{highlight.js, \url{highlightjs.org}} could be used for enhancing readability.
+\end{itemize}
+
+It is clear that Lxchecker offers many opportunities for improvement. An important aspect is user satisfaction -- the system can only shine if developers listen to feedback from users. Both students and teachers should contribute with suggestions on how to make Lxchecker better.
