@@ -79,10 +79,20 @@ The \textbf{assignment info} section contains information about:
 	\item the \textbf{timeout} imposes a limit on the duration of the evaluation.
 \end{itemize}
 
+Section \textbf{my submissions} lists the user's own submissions, with information about evaluation status, points awarded by the system and whether the submission is \textit{active} (selected for final grading by the teacher). The current implementation automatically marks the most recent submission as \textit{active}.
+
+The \textbf{upload submission} form at the bottom of the page is used to submit a new file for evaluation. After clicking the \textbf{submit} button, the user is redirected to the new submission page.
 
 \fig[scale=0.565]{src/img/scr-submission-pending.pdf}{img:scr-submission-pending}{waiting for the submission to be evaluated}
 
+As shown in \labelindexref{Figure}{img:scr-submission-pending}, the submission is initially marked as \textbf{pending}. The \textbf{on time} label indicates the submission was uploaded before the soft deadline and no penalty is subtracted. Downloading the uploaded file is possible by using the included link. Because the evaluation has not finished, there are no logs yet.
+
 \fig[scale=0.565]{src/img/scr-submission-done.pdf}{img:scr-submission-done}{submission was tested and score is displayed (full logs not included)}
 
-\fig[scale=0.565]{src/img/scr-submission-graded.pdf}{img:scr-submission-graded}{submission after grading by teacher}
+Once the submission is tested, more information becomes available. The \textbf{metadata} field is populated and logs are fully displayed in the \textbf{execution logs} section. Note, however, that \textbf{grading status} is still \textit{not graded} until a teacher gives feedback and a score.
 
+\fig[scale=0.565]{src/img/scr-submission-grading.pdf}{img:scr-submission-grading}{grading from for teachers}
+
+\labelindexref{Figure}{img:scr-submission-grading} shows the grading form. The teacher fills out the \textbf{score} and the textual \textbf{feedback}. After clicking the \textbf{submit} button, the \textbf{score by teacher} and \textbf{feedback} are populated and the student can see his final grade (score by tests + score by teacher - penalty). \labelindexref{Figure}{img:scr-submission-graded} displays the page of a graded submission.
+
+\fig[scale=0.565]{src/img/scr-submission-graded.pdf}{img:scr-submission-graded}{submission after grading by teacher}
