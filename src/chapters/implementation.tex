@@ -28,7 +28,7 @@ An alternative to Docker is the more recent \texttt{rkt}\footnote{CoreOS's \text
 \subsection{MongoDB}
 \label{sec:tech-mongo}
 
-For the persistence layer of Lxchecker, we chose to use MongoDB, a NoSQL database with dynamic schemas and intuitive JSON-like\footnote{BSON, \url{bsonspec.org}} document structure. MongoDB is open-source and provides drivers for a variety of programming languages\footnote{MongoDB Drivers, \url{docs.mongodb.com/ecosystem/drivers}}. It has good performance\footnote{Compare incomparable: PostgreSQL vs Mysql vs Mongodb, \url{http://erthalion.info/2015/12/29/json-benchmarks}} and built-in replication (useful for ensuring data redundancy). MongoDB has comprehensive documentation and strong community support.
+For the persistence layer of Lxchecker, we chose to use MongoDB, a NoSQL database with dynamic schemas and intuitive JSON-like\footnote{BSON, \url{bsonspec.org}} document structure. MongoDB is open-source and provides drivers for a variety of programming languages\footnote{MongoDB Drivers, \url{docs.mongodb.com/ecosystem/drivers}}. It has good performance\cite{erthalion} and built-in replication (useful for ensuring data redundancy). MongoDB has comprehensive documentation and strong community support.
 
 \subsection{Go}
 \label{sec:tech-go}
